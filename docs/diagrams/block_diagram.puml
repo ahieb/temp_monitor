@@ -1,0 +1,32 @@
+@startuml block_diagram
+skinparam componentStyle rectangle
+
+package "Application Layer" {
+    [Temperature Monitor\n(incl. LED FSM)] as TM
+}
+
+package "Hardware Abstraction Layer (HAL)" {
+    [HAL_ADC] as ADC
+    [HAL_EEPROM] as EEPROM
+    [HAL_LED] as LED
+    [HAL_Timer] as TMR
+}
+
+package "Driver Layer (Mock)" {
+    [mock_adc] as MADC
+    [mock_eeprom] as MEEPROM
+    [mock_led] as MLED
+    [mock_timer] as MTMR
+}
+
+TM --> ADC
+TM --> EEPROM
+TM --> LED
+TM --> TMR
+
+ADC --> MADC
+EEPROM --> MEEPROM
+LED --> MLED
+TMR --> MTMR
+
+@enduml
