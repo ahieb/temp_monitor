@@ -3,8 +3,7 @@
 # ============================================================
 
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -std=c11 -O2 -g
-CFLAGS += -Wno-unused-parameter
+CFLAGS = -Wall -Wextra -Werror -std=c11 -O3 -flto
 
 # Include paths
 CPPFLAGS = -I src -I src/hal -I src/app -I src/drivers
