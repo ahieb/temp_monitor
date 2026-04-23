@@ -18,6 +18,14 @@
 #define VREF_MV 3300    // Assume a 3.3V reference voltage for ADC
 #define VREF_OFFSET_MV 500 // Offset for temperature sensor
 #define ADC_FULL_SCALE 4096 // Assuming a 12-bit ADC
+#define SAMPLE_INTERVAL_US 100
+#define DEBUG 1
+
+void timer_expired_callback(void);
+void adc_data_ready_callback(void);
+
+led_state_t g_led_state = LED_STATE_RED;
+
 
 static int32_t temp_raw_to_temp_tenths(uint16_t temp_raw) {
     uint8_t adc_scale = eeprom_read_hw_revision() == REV_A ? 10 : 1;
@@ -29,9 +37,12 @@ static int32_t temp_raw_to_temp_tenths(uint16_t temp_raw) {
 uint8_t init_system(void) {
     char hw_serialnumber[32];
 
-    if(adc_init()) {
+    if(adc_init(adc_data_ready_callback)) {
         printf("ADC initialization failed\n");
         return 1;
+    }
+    else {
+        adc_start_sampling(); // once for initial value
     }
 
     if (eeprom_init()) {
@@ -48,7 +59,7 @@ uint8_t init_system(void) {
     printf("Hardware Serial Number: %s\n", hw_serialnumber);
 
     
-    if (timer_init()) {
+    if (timer_init(SAMPLE_INTERVAL_US, timer_expired_callback)) {
         printf("Timer initialization failed\n");
         return 1;
     }
@@ -66,57 +77,71 @@ static led_state_t get_initial_led_state(int32_t temp)
     return LED_STATE_GREEN;
 }
 
-static led_state_t update_led_fsm(led_state_t led_state, int32_t temp) {
-    switch (led_state) {
+static void update_led_fsm(int32_t temp) {
+    switch (g_led_state) {
     case LED_STATE_GREEN:
         printf ("debug: state=GREEN, temp=%d\n", temp);
         if (temp < CRITICAL_LOW_ENTER || temp >= CRITICAL_HIGH_ENTER)
-            led_state = LED_STATE_RED;
+            g_led_state = LED_STATE_RED;
         else if (temp >= WARNING_HIGH_ENTER)
-            led_state = LED_STATE_YELLOW;
+            g_led_state = LED_STATE_YELLOW;
         break;
 
     case LED_STATE_YELLOW:
         printf ("debug: state=YELLOW, temp=%d\n", temp);
         if (temp < CRITICAL_LOW_ENTER || temp >= CRITICAL_HIGH_ENTER)
-            led_state = LED_STATE_RED;
+            g_led_state = LED_STATE_RED;
         else if (temp < WARNING_HIGH_EXIT)
-            led_state = LED_STATE_GREEN;
+            g_led_state = LED_STATE_GREEN;
         break;
 
     case LED_STATE_RED:
         printf ("debug: state=RED, temp=%d\n", temp);
         if (temp >= CRITICAL_LOW_EXIT && temp < WARNING_HIGH_ENTER)
-            led_state = LED_STATE_GREEN;
+            g_led_state = LED_STATE_GREEN;
         else if (temp >= WARNING_HIGH_ENTER && temp < CRITICAL_HIGH_EXIT)
-            led_state = LED_STATE_YELLOW;
+            g_led_state = LED_STATE_YELLOW;
         break;
 
     default:
         printf ("debug: default state=RED, temp=%d\n", temp);
-        led_state = LED_STATE_RED;
+        g_led_state = LED_STATE_RED;
         break;
     }
 
-    return led_state;
+    return;
+}
+
+void timer_expired_callback(void) {
+    g_timer_expired = false; // reset timer expired flag
+    void adc_start_sampling(void);
+}
+
+void adc_data_ready_callback(void) {
+    g_adc_ready = false; // set ADC data ready flag
+    uint16_t temp_raw = adc_read_temp();
+    int32_t temperature_tenths = temp_raw_to_temp_tenths(temp_raw);
+    update_led_fsm(temperature_tenths);
+    led_set_state(g_led_state);
 }
 
 void monitor_temperature(void) {
     uint16_t temp_raw = 0;
     int32_t temperature_tenths = 0;
-    led_state_t led_state = LED_STATE_RED;
 
     temp_raw = adc_read_temp();
     temperature_tenths = temp_raw_to_temp_tenths(temp_raw);
-    led_state = get_initial_led_state(temperature_tenths);
-    led_set_state(led_state);
+    g_led_state = get_initial_led_state(temperature_tenths);
+    led_set_state(g_led_state);
+
+    if (!timer_start()) {
+        printf("Failed to start timer\n");
+        return;
+    }
 
     while (1) {
-        sleep(1);
-
-        temp_raw = adc_read_temp();
-        temperature_tenths = temp_raw_to_temp_tenths(temp_raw);
-        led_state = update_led_fsm(led_state, temperature_tenths);
-        led_set_state(led_state);
+        #ifdef DEBUG
+            sleep(1); // only for debugging, in real implementation we would wait for timer event
+        #endif
     }
 }
