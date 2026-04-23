@@ -2,10 +2,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "monitor_temperature.h"
+#include "debug.h"
 
 int main(void) {
     if (init_system()) {
-        printf("Error initializing system.\n");
+        DEBUG_PRINTF("Error initializing system.\n");
         return 1;
     }
 

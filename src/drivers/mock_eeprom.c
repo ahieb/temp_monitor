@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include "hal_eeprom.h"
+#include "debug.h"
 
 uint8_t eeprom_init(void) {
-    printf("[EEPROM] Initialized\n");
+    DEBUG_PRINTF("[EEPROM] Initialized\n");
     return 0;
 }
 
 uint8_t eeprom_read_hw_revision(void) {
-    return 1; // Mock hardware revision
+    return 0; // Mock hardware revision A
 }
 
 uint8_t eeprom_read_hw_serialnumber(char *buf, uint8_t buf_len) {
