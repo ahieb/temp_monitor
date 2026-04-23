@@ -19,6 +19,7 @@ visualization device, with indicators for OK, Warning, and Critical temperature 
     -> Assume this is the case
 * Temperature sensor ADC resolution?
     -> Assume 12bit
+* What exactly is time-critical, only sampling or signaling via LEDs, too?
 
 ## 4. Architecture Layers
 

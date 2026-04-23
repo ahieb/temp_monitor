@@ -19,6 +19,11 @@ package "Driver Layer (Mock)" {
     [mock_timer] as MTMR
 }
 
+note right of TM
+  - Uses timer and ADC
+    interrupt callbacks
+end note
+
 TM --> ADC
 TM --> EEPROM
 TM --> LED
