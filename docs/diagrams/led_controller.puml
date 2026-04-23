@@ -1,0 +1,24 @@
+@startuml led_controller
+skinparam state {
+    BackgroundColor<<normal>> LightGreen
+    BackgroundColor<<warning>> Yellow
+    BackgroundColor<<critical>> Salmon
+}
+
+[*] --> InitialReading : Power ON
+InitialReading --> Normal : 5°C ≤ T < 85°C
+InitialReading --> Warning : 85°C ≤ T < 105°C
+InitialReading --> Critical : T ≥ 105°C OR T < 5°C
+
+state "Normal" as Normal <<normal>> : Green LED ON\nTemp: 5°C ≤ T < 85°C
+state "Warning" as Warning <<warning>> : Yellow LED ON\nTemp: 85°C ≤ T < 105°C  
+state "Critical" as Critical <<critical>> : Red LED ON\nTemp: T ≥ 105°C OR T < 5°C
+
+Normal --> Warning : T ≥ 85°C
+Warning --> Normal : T < 85°C
+Warning --> Critical : T ≥ 105°C
+Critical --> Warning : 85°C ≤ T < 105°C
+Critical --> Normal : 5°C ≤ T < 85°C
+Normal --> Critical : T < 5°C
+
+@enduml
