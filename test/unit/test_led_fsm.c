@@ -2,6 +2,9 @@
 #include "unity.h"
 #include "monitor_temperature.c"  // Include to test static functions
 
+void setUp(void) {}
+void tearDown(void) {}
+
 // Initial state tests
 void test_initial_state_green_normal_temp(void) {
     TEST_ASSERT_EQUAL(LED_STATE_GREEN, get_initial_led_state(500));
